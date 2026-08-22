@@ -5,16 +5,11 @@ from datetime import datetime, timezone
 
 from loguru import logger
 
-from app.ai.analyzer import analyze_investigation
+from app.ai.agent import analyze_investigation, enrich_capture
 from app.core.config import get_settings
+from app.kubernetes.capture import ClusterUnreachableError, capture_cluster
 from app.kubernetes.clusters import demo_scenario_for_context, list_clusters
 from app.kubernetes.kubeconfig import resolve_kubeconfig
-from app.kubernetes.deployments import inspect_deployments
-from app.kubernetes.events import analyze_events
-from app.kubernetes.executor import run_kubectl
-from app.kubernetes.logs import collect_logs_for_pods
-from app.kubernetes.network import inspect_network
-from app.kubernetes.pods import inspect_pods
 from app.models.schemas import Diagnosis, InvestigateResponse, InvestigationRecord
 from app.services.fixtures import demo_investigation
 from app.services.progress import progress_bus
@@ -29,10 +24,6 @@ STEPS = [
     ("ai", "AI Reasoning"),
     ("done", "Root Cause Found"),
 ]
-
-
-class ClusterUnreachableError(RuntimeError):
-    pass
 
 
 async def investigate(
@@ -50,26 +41,28 @@ async def investigate(
 
     try:
         if use_demo:
-            evidence = demo_investigation(scenario or "crashloop")
-            for key, label in STEPS:
+            capture = demo_investigation(scenario or "crashloop")
+            for key, label in STEPS[:-2]:
                 await progress_bus.publish(
                     job_id,
                     {"event": "progress", "step": key, "label": label, "done": True},
                 )
         else:
             try:
-                evidence = await _collect_evidence(job_id, selected_context, namespace)
+                capture = await capture_cluster(job_id, selected_context, namespace)
             except ClusterUnreachableError as exc:
                 if _should_fallback_to_demo(str(exc)):
-                    logger.warning("No reachable cluster; using demo investigation: {}", exc)
-                    evidence = demo_investigation(scenario or "crashloop")
-                    for key, label in STEPS:
+                    logger.warning("No reachable cluster; using demo capture: {}", exc)
+                    capture = demo_investigation(scenario or "crashloop")
+                    for key, label in STEPS[:-2]:
                         await progress_bus.publish(
                             job_id,
                             {"event": "progress", "step": key, "label": label, "done": True},
                         )
                 else:
-                    raise
+                    raise ClusterUnreachableError(_friendly_kubectl(str(exc))) from exc
+
+        evidence = enrich_capture(capture)
 
         await progress_bus.publish(
             job_id, {"event": "progress", "step": "ai", "label": "AI Reasoning", "done": False}
@@ -100,82 +93,17 @@ async def investigate(
             diagnosis=diagnosis,
             history=list_history(),
         )
-        await progress_bus.publish(
-            job_id, {"event": "result", "payload": response.model_dump()}
-        )
+        await progress_bus.publish(job_id, {"event": "result", "payload": response.model_dump()})
         return response
     except ClusterUnreachableError as exc:
         return await _fail(job_id, selected_context, str(exc))
     except Exception as exc:  # noqa: BLE001
         logger.exception("Investigation failed")
-        return await _fail(job_id, selected_context, _friendly_error(exc))
-
-
-async def _collect_evidence(job_id: str, context: str | None, namespace: str | None) -> dict:
-    ns_args = ["-n", namespace] if namespace else ["-A"]
-
-    await progress_bus.publish(job_id, {"event": "progress", "step": "pods", "label": "Checking Pods", "done": False})
-    pods_raw = _require_json(["get", "pods", *ns_args, "-o", "json"], context)
-    pods = inspect_pods(pods_raw.get("items") or [])
-    await progress_bus.publish(job_id, {"event": "progress", "step": "pods", "label": "Checking Pods", "done": True})
-
-    await progress_bus.publish(job_id, {"event": "progress", "step": "logs", "label": "Reading Logs", "done": False})
-
-    def fetch_logs(ns: str, name: str) -> str:
-        result = run_kubectl(
-            ["logs", "-n", ns, name, "--tail=80", "--all-containers=true"],
-            context=context,
+        return await _fail(
+            job_id,
+            selected_context,
+            f"Investigation failed: {exc}. Check kubeconfig, kubectl access, and backend logs.",
         )
-        return result.stdout if result.success else result.stderr
-
-    logs = collect_logs_for_pods(fetch_logs, pods.get("problematic_pods") or [])
-    await progress_bus.publish(job_id, {"event": "progress", "step": "logs", "label": "Reading Logs", "done": True})
-
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "events", "label": "Analyzing Events", "done": False}
-    )
-    events_raw = _require_json(["get", "events", *ns_args, "-o", "json"], context)
-    events = analyze_events(events_raw.get("items") or [])
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "events", "label": "Analyzing Events", "done": True}
-    )
-
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "deployments", "label": "Inspecting Deployments", "done": False}
-    )
-    deploy_raw = _require_json(["get", "deployments", *ns_args, "-o", "json"], context)
-    deployments = inspect_deployments(deploy_raw.get("items") or [])
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "deployments", "label": "Inspecting Deployments", "done": True}
-    )
-
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "network", "label": "Checking Networking", "done": False}
-    )
-    svc_raw = _require_json(["get", "svc", *ns_args, "-o", "json"], context)
-    ep_raw = _require_json(["get", "endpoints", *ns_args, "-o", "json"], context)
-    network = inspect_network(svc_raw.get("items") or [], ep_raw.get("items") or [], pods_raw.get("items") or [])
-    await progress_bus.publish(
-        job_id, {"event": "progress", "step": "network", "label": "Checking Networking", "done": True}
-    )
-
-    return {
-        "pods": pods,
-        "logs": logs,
-        "events": events,
-        "deployments": deployments,
-        "network": network,
-    }
-
-
-def _require_json(args: list[str], context: str | None) -> dict:
-    result = run_kubectl(args, context=context)
-    parsed = result.parsed_json()
-    if parsed is None:
-        raise ClusterUnreachableError(_friendly_kubectl(result.stderr or result.stdout))
-    if not isinstance(parsed, dict):
-        return {"items": parsed}
-    return parsed
 
 
 def _should_fallback_to_demo(message: str) -> bool:
@@ -184,6 +112,7 @@ def _should_fallback_to_demo(message: str) -> bool:
         "no such file" in text
         or "kubeconfig file not found" in text
         or "stat /kube/config" in text
+        or "skipped: no kubeconfig" in text
     )
 
 
@@ -202,10 +131,6 @@ def _friendly_kubectl(stderr: str) -> str:
         "- kubectl permissions\n"
         f"\nDetails: {text or 'no output from kubectl'}"
     )
-
-
-def _friendly_error(exc: Exception) -> str:
-    return f"Investigation failed: {exc}. Check kubeconfig, kubectl access, and backend logs."
 
 
 async def _fail(job_id: str, context: str | None, message: str) -> InvestigateResponse:

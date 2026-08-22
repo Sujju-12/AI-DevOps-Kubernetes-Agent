@@ -33,6 +33,15 @@ def test_healthy_cluster() -> None:
     assert "no critical" in diagnosis.root_cause.lower()
 
 
+def test_extract_issues_from_crashloop_fixture() -> None:
+    from app.ai.issues import extract_issues
+
+    issues = extract_issues(demo_investigation("crashloop"))
+    assert issues
+    assert issues[0].issue_type == "crash_loop"
+    assert any("missing_env" in signal for signal in issues[0].signals)
+
+
 def test_pod_inspector_detects_crashloop() -> None:
     items = [
         {

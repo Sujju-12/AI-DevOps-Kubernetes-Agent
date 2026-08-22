@@ -14,7 +14,8 @@ export type Diagnosis = {
   kubectl_command: string;
   prevention: string;
   confidence: number;
-  engine: string;
+    issue_type?: string;
+    evidence?: string[];
 };
 
 export type InvestigationRecord = {

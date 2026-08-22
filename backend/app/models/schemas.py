@@ -49,6 +49,8 @@ class Diagnosis(BaseModel):
     prevention: str = ""
     confidence: int = 0
     engine: str = "heuristic"
+    issue_type: str = ""
+    evidence: list[str] = Field(default_factory=list)
 
 
 class InvestigationRecord(BaseModel):

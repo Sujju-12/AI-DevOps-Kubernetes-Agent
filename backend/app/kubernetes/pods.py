@@ -1,71 +1,76 @@
-UNHEALTHY_REASONS = {
-    "CrashLoopBackOff",
+"""Extract Kubernetes failure signals from kubectl JSON."""
+
+TERMINATED_PRIORITY = ("OOMKilled", "Error", "Completed")
+WAITING_PRIORITY = (
     "ImagePullBackOff",
     "ErrImagePull",
-    "Pending",
-    "Error",
-    "OOMKilled",
-    "ContainerCreating",
+    "CrashLoopBackOff",
     "CreateContainerConfigError",
-    "RunContainerError",
-    "Failed",
-}
+    "InvalidImageName",
+    "ContainerCreating",
+)
 
 
 def inspect_pods(items: list[dict]) -> dict:
     problematic = []
     for item in items:
-        metadata = item.get("metadata") or {}
+        meta = item.get("metadata") or {}
         status = item.get("status") or {}
         phase = status.get("phase") or "Unknown"
-        reason, ready, restarts = _pod_reason(status)
-        unhealthy = (
-            phase not in {"Running", "Succeeded"}
-            or reason in UNHEALTHY_REASONS
-            or not ready
-            or (phase == "Running" and restarts > 3 and reason in UNHEALTHY_REASONS)
-        )
-        if phase == "Running" and ready and reason not in UNHEALTHY_REASONS:
-            unhealthy = False
-        if reason in UNHEALTHY_REASONS or phase in {"Pending", "Failed"}:
-            unhealthy = True
-        if not unhealthy:
+        reason, ready, restarts, last_message = _summarize_status(status)
+        if not _is_unhealthy(phase, reason, ready):
             continue
         problematic.append(
             {
-                "name": metadata.get("name"),
-                "namespace": metadata.get("namespace"),
+                "name": meta.get("name"),
+                "namespace": meta.get("namespace"),
                 "phase": phase,
                 "status": reason or phase,
                 "ready": ready,
                 "restarts": restarts,
-                "labels": (metadata.get("labels") or {}),
+                "message": last_message,
+                "labels": meta.get("labels") or {},
             }
         )
-
     return {
-        "healthy": len(problematic) == 0,
+        "healthy": not problematic,
         "total_pods": len(items),
         "problematic_pods": problematic,
     }
 
 
-def _pod_reason(status: dict) -> tuple[str, bool, int]:
-    reason = status.get("reason") or status.get("phase") or "Unknown"
-    ready = False
+def _is_unhealthy(phase: str, reason: str, ready: bool) -> bool:
+    if phase in {"Pending", "Failed"}:
+        return True
+    if reason in set(WAITING_PRIORITY + TERMINATED_PRIORITY):
+        return True
+    return phase == "Running" and not ready and reason not in {"Running", "Succeeded"}
+
+
+def _summarize_status(status: dict) -> tuple[str, bool, int, str]:
     restarts = 0
-    waiting_reason = None
+    waiting = ""
+    terminated = ""
+    message = ""
+    ready = False
     for container in status.get("containerStatuses") or []:
         restarts += int(container.get("restartCount") or 0)
-        state = container.get("state") or {}
-        if "waiting" in state:
-            waiting_reason = (state["waiting"] or {}).get("reason")
-        if "terminated" in state:
-            terminated = state["terminated"] or {}
-            waiting_reason = terminated.get("reason") or waiting_reason
         ready = ready or bool(container.get("ready"))
+        state = container.get("state") or {}
+        last = container.get("lastState") or {}
+        if "waiting" in state:
+            waiting = (state["waiting"] or {}).get("reason") or waiting
+            message = (state["waiting"] or {}).get("message") or message
+        if "terminated" in state:
+            terminated = (state["terminated"] or {}).get("reason") or terminated
+            message = (state["terminated"] or {}).get("message") or message
+        if "terminated" in last:
+            terminated = terminated or (last["terminated"] or {}).get("reason") or ""
+            message = message or (last["terminated"] or {}).get("message") or ""
     conditions = {c.get("type"): c for c in status.get("conditions") or []}
-    ready_condition = conditions.get("Ready") or {}
-    if ready_condition:
-        ready = ready_condition.get("status") == "True"
-    return waiting_reason or reason, ready, restarts
+    if "Ready" in conditions:
+        ready = conditions["Ready"].get("status") == "True"
+    reason = waiting or terminated or status.get("reason") or status.get("phase") or "Unknown"
+    if terminated == "OOMKilled":
+        reason = "OOMKilled"
+    return reason, ready, restarts, message[:300]
