@@ -7,10 +7,14 @@ from app.core.config import get_settings
 from app.models.schemas import ClusterContext, ClusterListResponse
 
 
-KUBECONFIG_HELP = (
-    "Unable to read local kubeconfig. Please verify the kubeconfig path, "
-    "that the file exists, and that you have permission to read it."
-)
+def _help(path: Path) -> str:
+    return (
+        f"Unable to read local kubeconfig at {path}. "
+        "On Docker/WSL the file must exist on the Linux side (usually ~/.kube/config) "
+        "and be mounted into the backend container. "
+        "Set KUBECONFIG_HOST_PATH in a project .env to your real config, then recreate the backend. "
+        "To try the UI without a cluster, restart with DEMO_MODE=true."
+    )
 
 
 def list_clusters() -> ClusterListResponse:
@@ -20,7 +24,7 @@ def list_clusters() -> ClusterListResponse:
         logger.warning("Kubeconfig not found at {}", path)
         return ClusterListResponse(
             kubeconfig_path=str(path),
-            warning=KUBECONFIG_HELP,
+            warning=_help(path),
         )
 
     try:
@@ -29,7 +33,7 @@ def list_clusters() -> ClusterListResponse:
         logger.error("Failed to parse kubeconfig: {}", exc)
         return ClusterListResponse(
             kubeconfig_path=str(path),
-            warning=KUBECONFIG_HELP,
+            warning=_help(path),
         )
 
     clusters = {item.get("name"): item.get("cluster") or {} for item in data.get("clusters") or []}

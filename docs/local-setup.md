@@ -31,11 +31,34 @@ Default login: `admin` / `admin`
 
 ## Run with Docker Compose (still local)
 
+The backend container reads kubeconfig from `/kube/config`, which Compose bind-mounts from:
+
+```text
+$KUBECONFIG_HOST_PATH   or   $HOME/.kube/config
+```
+
+On WSL, Docker does **not** automatically use `C:\Users\...\ .kube\config`. Create or copy the file into Linux first:
+
+```bash
+ls -la ~/.kube/config
+# if missing:
+mkdir -p ~/.kube
+cp /mnt/c/Users/<YourWindowsUser>/.kube/config ~/.kube/config
+```
+
+Then start (or recreate) the stack:
+
 ```bash
 docker compose up --build
 ```
 
-Mounts `$HOME/.kube` into the backend so every kubeconfig context is listed in the UI. Click a cluster, then **Investigate Cluster**.
+If the file lives somewhere else, create a `.env` next to `docker-compose.yml`:
+
+```bash
+KUBECONFIG_HOST_PATH=/mnt/c/Users/<YourWindowsUser>/.kube/config
+```
+
+Click a listed cluster, then **Investigate Cluster**.
 
 ## Demo mode (no live cluster)
 

@@ -42,3 +42,13 @@ users:
     current = next(item for item in result.contexts if item.is_current)
     assert current.server == "https://127.0.0.1:6443"
     get_settings.cache_clear()
+
+
+def test_missing_kubeconfig_includes_path(tmp_path: Path, monkeypatch) -> None:
+    missing = tmp_path / "does-not-exist"
+    monkeypatch.setenv("KUBECONFIG_PATH", str(missing))
+    get_settings.cache_clear()
+    result = list_clusters()
+    assert result.contexts == []
+    assert str(missing) in (result.warning or "")
+    get_settings.cache_clear()

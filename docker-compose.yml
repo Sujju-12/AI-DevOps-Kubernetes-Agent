@@ -7,6 +7,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      KUBECONFIG: /kube/config
       KUBECONFIG_PATH: /kube/config
       DEMO_MODE: ${DEMO_MODE:-false}
       LLM_PROVIDER: local
@@ -14,7 +15,9 @@ services:
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       DATABASE_PATH: /app/data/agent.db
     volumes:
-      - ${HOME}/.kube:/kube:ro
+      # Override with KUBECONFIG_HOST_PATH if kubeconfig is not at ~/.kube/config
+      # (common on WSL: copy from /mnt/c/Users/<you>/.kube/config first).
+      - ${KUBECONFIG_HOST_PATH:-${HOME}/.kube/config}:/kube/config:ro
       - agent-data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
