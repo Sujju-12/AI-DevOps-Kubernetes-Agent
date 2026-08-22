@@ -7,7 +7,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      KUBECONFIG: /kube/config
+      # Expected mount path. Entrypoint unsets KUBECONFIG and enables DEMO_MODE
+      # when this file does not exist (typical on WSL without ~/.kube/config).
       KUBECONFIG_PATH: /kube/config
       DEMO_MODE: ${DEMO_MODE:-false}
       LLM_PROVIDER: local

@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 from app.core.config import get_settings
 
@@ -13,7 +14,7 @@ def is_kubeconfig_file(path: Path) -> bool:
 def kubeconfig_candidates() -> list[Path]:
     settings = get_settings()
     raw: list[str] = []
-    kubeconfig_env = __import__("os").environ.get("KUBECONFIG", "")
+    kubeconfig_env = os.environ.get("KUBECONFIG", "")
     if kubeconfig_env:
         raw.extend(part for part in kubeconfig_env.split(":") if part)
     raw.append(settings.kubeconfig_path)

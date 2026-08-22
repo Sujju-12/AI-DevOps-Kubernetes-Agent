@@ -61,3 +61,7 @@ def test_investigate_demo_context_without_kubeconfig(monkeypatch, tmp_path) -> N
     body = result.json()
     assert body["status"] == "success"
     assert "image" in body["diagnosis"]["root_cause"].lower()
+
+    fallback = client.post("/investigate", json={"context": "docker-desktop"}, headers=headers)
+    assert fallback.status_code == 200
+    assert fallback.json()["status"] == "success"

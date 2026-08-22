@@ -45,7 +45,8 @@ async def investigate(
     job_id = job_id or str(uuid.uuid4())
     selected_context = context or list_clusters().current_context
     scenario = demo_scenario or demo_scenario_for_context(selected_context)
-    use_demo = bool(settings.demo_mode or scenario or resolve_kubeconfig() is None)
+    kubeconfig = resolve_kubeconfig()
+    use_demo = bool(settings.demo_mode or scenario or kubeconfig is None)
 
     try:
         if use_demo:
@@ -56,7 +57,19 @@ async def investigate(
                     {"event": "progress", "step": key, "label": label, "done": True},
                 )
         else:
-            evidence = await _collect_evidence(job_id, selected_context, namespace)
+            try:
+                evidence = await _collect_evidence(job_id, selected_context, namespace)
+            except ClusterUnreachableError as exc:
+                if _should_fallback_to_demo(str(exc)):
+                    logger.warning("No reachable cluster; using demo investigation: {}", exc)
+                    evidence = demo_investigation(scenario or "crashloop")
+                    for key, label in STEPS:
+                        await progress_bus.publish(
+                            job_id,
+                            {"event": "progress", "step": key, "label": label, "done": True},
+                        )
+                else:
+                    raise
 
         await progress_bus.publish(
             job_id, {"event": "progress", "step": "ai", "label": "AI Reasoning", "done": False}
@@ -163,6 +176,15 @@ def _require_json(args: list[str], context: str | None) -> dict:
     if not isinstance(parsed, dict):
         return {"items": parsed}
     return parsed
+
+
+def _should_fallback_to_demo(message: str) -> bool:
+    text = message.lower()
+    return (
+        "no such file" in text
+        or "kubeconfig file not found" in text
+        or "stat /kube/config" in text
+    )
 
 
 def _friendly_kubectl(stderr: str) -> str:

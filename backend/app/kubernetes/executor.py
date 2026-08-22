@@ -1,9 +1,16 @@
 from dataclasses import dataclass
+import os
+import subprocess
 
 from loguru import logger
 
 from app.core.config import get_settings
 from app.kubernetes.kubeconfig import resolve_kubeconfig
+
+MISSING_KUBECONFIG = (
+    "kubeconfig file not found. The backend will use local demo investigations "
+    "until you mount a real ~/.kube/config."
+)
 
 
 @dataclass
@@ -31,13 +38,21 @@ def run_kubectl(
     timeout: int | None = None,
 ) -> KubectlResult:
     """Safely execute kubectl and return structured output."""
-    import subprocess
-
     settings = get_settings()
-    command = ["kubectl"]
     kubeconfig = resolve_kubeconfig()
-    if kubeconfig:
-        command += ["--kubeconfig", str(kubeconfig)]
+    env = os.environ.copy()
+    if not kubeconfig:
+        env.pop("KUBECONFIG", None)
+        return KubectlResult(
+            success=False,
+            stdout="",
+            stderr=MISSING_KUBECONFIG,
+            command="kubectl (skipped: no kubeconfig)",
+            returncode=2,
+        )
+
+    command = ["kubectl", "--kubeconfig", str(kubeconfig)]
+    env["KUBECONFIG"] = str(kubeconfig)
     if context:
         command += ["--context", context]
     command += args
@@ -50,6 +65,7 @@ def run_kubectl(
             text=True,
             timeout=timeout or settings.kubectl_timeout_seconds,
             check=False,
+            env=env,
         )
         result = KubectlResult(
             success=completed.returncode == 0,
