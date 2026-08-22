@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from loguru import logger
 
 from app.core.config import get_settings
+from app.kubernetes.kubeconfig import resolve_kubeconfig
 
 
 @dataclass
@@ -34,9 +35,9 @@ def run_kubectl(
 
     settings = get_settings()
     command = ["kubectl"]
-    kubeconfig = settings.kubeconfig_path
+    kubeconfig = resolve_kubeconfig()
     if kubeconfig:
-        command += ["--kubeconfig", kubeconfig]
+        command += ["--kubeconfig", str(kubeconfig)]
     if context:
         command += ["--context", context]
     command += args

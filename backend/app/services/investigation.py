@@ -7,7 +7,8 @@ from loguru import logger
 
 from app.ai.analyzer import analyze_investigation
 from app.core.config import get_settings
-from app.kubernetes.clusters import list_clusters
+from app.kubernetes.clusters import demo_scenario_for_context, list_clusters
+from app.kubernetes.kubeconfig import resolve_kubeconfig
 from app.kubernetes.deployments import inspect_deployments
 from app.kubernetes.events import analyze_events
 from app.kubernetes.executor import run_kubectl
@@ -43,10 +44,12 @@ async def investigate(
     settings = get_settings()
     job_id = job_id or str(uuid.uuid4())
     selected_context = context or list_clusters().current_context
+    scenario = demo_scenario or demo_scenario_for_context(selected_context)
+    use_demo = bool(settings.demo_mode or scenario or resolve_kubeconfig() is None)
 
     try:
-        if settings.demo_mode or demo_scenario:
-            evidence = demo_investigation(demo_scenario)
+        if use_demo:
+            evidence = demo_investigation(scenario or "crashloop")
             for key, label in STEPS:
                 await progress_bus.publish(
                     job_id,

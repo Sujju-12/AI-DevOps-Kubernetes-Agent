@@ -31,42 +31,39 @@ Default login: `admin` / `admin`
 
 ## Run with Docker Compose (still local)
 
-The backend container reads kubeconfig from `/kube/config`, which Compose bind-mounts from:
-
-```text
-$KUBECONFIG_HOST_PATH   or   $HOME/.kube/config
-```
-
-On WSL, Docker does **not** automatically use `C:\Users\...\ .kube\config`. Create or copy the file into Linux first:
-
-```bash
-ls -la ~/.kube/config
-# if missing:
-mkdir -p ~/.kube
-cp /mnt/c/Users/<YourWindowsUser>/.kube/config ~/.kube/config
-```
-
-Then start (or recreate) the stack:
-
 ```bash
 docker compose up --build
 ```
 
-If the file lives somewhere else, create a `.env` next to `docker-compose.yml`:
+The backend mounts `$HOME/.kube` (override with `KUBECONFIG_HOST_DIR`). If `config` is missing, the UI lists **demo clusters** so you can still click Investigate.
+
+On WSL, Docker does not use `C:\Users\...\.kube\config` automatically. Copy it first:
 
 ```bash
-KUBECONFIG_HOST_PATH=/mnt/c/Users/<YourWindowsUser>/.kube/config
+mkdir -p ~/.kube
+cp /mnt/c/Users/<YourWindowsUser>/.kube/config ~/.kube/config
+docker compose up -d --force-recreate backend
 ```
 
-Click a listed cluster, then **Investigate Cluster**.
-
-## Demo mode (no live cluster)
+Or point Compose at the Windows path in a `.env` file next to `docker-compose.yml`:
 
 ```bash
-DEMO_MODE=true PYTHONPATH=backend uvicorn app.main:app --app-dir backend --port 8000
+KUBECONFIG_HOST_DIR=/mnt/c/Users/<YourWindowsUser>/.kube
 ```
 
-## Failure scenarios
+## Demo mode
+
+If kubeconfig is missing, demo clusters are shown automatically:
+
+- demo-crashloop
+- demo-imagepull
+- demo-oom
+- demo-selector
+- demo-healthy
+
+You can also force this with `DEMO_MODE=true`.
+
+## Failure scenarios (real cluster)
 
 ```bash
 kubectl apply -f k8s/scenarios/namespace.yaml

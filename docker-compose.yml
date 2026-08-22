@@ -15,9 +15,9 @@ services:
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       DATABASE_PATH: /app/data/agent.db
     volumes:
-      # Override with KUBECONFIG_HOST_PATH if kubeconfig is not at ~/.kube/config
-      # (common on WSL: copy from /mnt/c/Users/<you>/.kube/config first).
-      - ${KUBECONFIG_HOST_PATH:-${HOME}/.kube/config}:/kube/config:ro
+      # Directory mount so Compose starts even when kubeconfig is missing.
+      # WSL: copy Windows config to ~/.kube/config, or set KUBECONFIG_HOST_DIR.
+      - ${KUBECONFIG_HOST_DIR:-${HOME}/.kube}:/kube:ro
       - agent-data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
