@@ -1,6 +1,6 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
-**Prompt 01–02:** `docker compose up --build` then open http://localhost:3000 and `POST http://localhost:8000/investigate`. See [docs/01-project-setup.md](docs/01-project-setup.md) and [docs/02-investigation.md](docs/02-investigation.md).
+**Prompt 01–03:** `docker compose up --build` then `POST http://localhost:8000/investigate` (evidence + diagnosis). See [docs/01-project-setup.md](docs/01-project-setup.md), [docs/02-investigation.md](docs/02-investigation.md), and [docs/03-ai-reasoning.md](docs/03-ai-reasoning.md).
 
 ## Goal
 

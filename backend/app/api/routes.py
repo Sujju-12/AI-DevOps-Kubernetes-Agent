@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.ai.analyzer import diagnose
 from app.core.config import get_settings
 from app.models.schemas import HealthResponse, InvestigateRequest, InvestigateResponse
 from app.services.investigation import investigate
@@ -16,4 +17,8 @@ def health() -> HealthResponse:
 @router.post("/investigate", response_model=InvestigateResponse)
 def run_investigation(body: InvestigateRequest | None = None) -> InvestigateResponse:
     payload = body or InvestigateRequest()
-    return investigate(context=payload.context, namespace=payload.namespace)
+    result = investigate(context=payload.context, namespace=payload.namespace)
+    if result.status != "success":
+        return result
+    result.diagnosis = diagnose(result.investigation)
+    return result
