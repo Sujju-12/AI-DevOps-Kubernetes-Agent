@@ -2,7 +2,13 @@ from fastapi import APIRouter, Header
 
 from app.ai.analyzer import diagnose
 from app.core.config import get_settings
-from app.models.schemas import HealthResponse, InvestigateRequest, InvestigateResponse
+from app.kubernetes.clusters import list_kube_contexts
+from app.models.schemas import (
+    ClusterListResponse,
+    HealthResponse,
+    InvestigateRequest,
+    InvestigateResponse,
+)
 from app.services.history import PROGRESS_STEPS, mark_step, patch_investigation
 from app.services.investigation import investigate
 
@@ -15,6 +21,12 @@ def health() -> HealthResponse:
     return HealthResponse(status="healthy", service=settings.service_name)
 
 
+@router.get("/clusters", response_model=ClusterListResponse)
+def clusters() -> ClusterListResponse:
+    """Return every context in the local kubeconfig (no certificate data)."""
+    return list_kube_contexts()
+
+
 @router.post("/investigate", response_model=InvestigateResponse)
 def run_investigation(
     body: InvestigateRequest | None = None,
@@ -23,11 +35,17 @@ def run_investigation(
     payload = body or InvestigateRequest()
     token = _bearer(authorization)
     steps = [dict(item) for item in PROGRESS_STEPS]
+    cluster_name = payload.cluster or payload.context
     if payload.investigation_id:
         patch_investigation(
             token,
             payload.investigation_id,
-            {"status": "running", "steps": steps, "namespace": payload.namespace},
+            {
+                "status": "running",
+                "steps": steps,
+                "namespace": payload.namespace,
+                "cluster": cluster_name,
+            },
         )
 
     def on_progress(key: str) -> None:

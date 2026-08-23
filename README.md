@@ -1,6 +1,6 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
-**Prompt 01–04:** `docker compose up --build` then open http://localhost:3000 (Supabase login + dashboard). `POST http://localhost:8000/investigate` still returns evidence + diagnosis. See [docs/01-project-setup.md](docs/01-project-setup.md), [docs/02-investigation.md](docs/02-investigation.md), [docs/03-ai-reasoning.md](docs/03-ai-reasoning.md), and [docs/04-dashboard.md](docs/04-dashboard.md).
+**Prompt 01–05:** `docker compose up --build` then open http://localhost:3000 (Supabase login + cluster picker). Click a kubeconfig cluster to investigate. See [docs/01-project-setup.md](docs/01-project-setup.md), [docs/02-investigation.md](docs/02-investigation.md), [docs/03-ai-reasoning.md](docs/03-ai-reasoning.md), [docs/04-dashboard.md](docs/04-dashboard.md), and [docs/05-e2e.md](docs/05-e2e.md). Failure fixtures: [k8s/scenarios/README.md](k8s/scenarios/README.md).
 
 ## Goal
 

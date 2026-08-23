@@ -9,6 +9,7 @@ from app.ai.confidence import apply_confidence
 from app.ai.fixes import apply_fix_defaults
 from app.ai.llm import LlmError, LlmNotConfiguredError, complete
 from app.ai.prompt import build_messages
+from app.core.messages import CLUSTER_HEALTHY_ROOT_CAUSE
 from app.models.schemas import Diagnosis
 
 
@@ -49,7 +50,7 @@ def correlate_locally(investigation: dict) -> Diagnosis:
         name = pod.get("name") or "the workload"
         ns = pod.get("namespace") or "default"
         return Diagnosis(
-            root_cause="Application failed because a required environment variable is missing.",
+            root_cause="Missing environment variable. The application cannot start without it.",
             explanation=(
                 f"Pod {name} is in {pod.get('status') or 'CrashLoopBackOff'} and logs mention a missing "
                 "configuration value (for example DATABASE_URL), which prevents startup."
@@ -64,13 +65,28 @@ def correlate_locally(investigation: dict) -> Diagnosis:
         name = pod.get("name") or "the pod"
         ns = pod.get("namespace") or "default"
         return Diagnosis(
-            root_cause="The container image cannot be pulled.",
+            root_cause="Invalid image tag. The container image cannot be pulled.",
             explanation=f"{name} is stuck pulling an image (ImagePullBackOff / ErrImagePull).",
-            fix="Fix the image name/tag, or create an imagePullSecret if the registry is private.",
+            fix="Update the Deployment image to a valid name and tag (or add an imagePullSecret for a private registry).",
             kubectl_command=f"kubectl -n {ns} describe pod {name}",
             prevention="Pin image tags in CI and verify registry credentials before deploy.",
             confidence=88,
             confidence_reason="Pod status and pull events agree on an image pull failure.",
+        )
+    if "oomkilled" in status or "oomkilled" in lowered or "OOMKilled" in events:
+        name = pod.get("name") or "the container"
+        ns = pod.get("namespace") or "default"
+        return Diagnosis(
+            root_cause="Container exceeded memory limit (OOMKilled).",
+            explanation=(
+                f"{name} was killed because it used more memory than the pod limit. "
+                "Kubernetes sets the last state to OOMKilled when this happens."
+            ),
+            fix="Increase memory requests/limits on the Deployment, or reduce the application's memory use.",
+            kubectl_command=f"kubectl -n {ns} describe pod {name}",
+            prevention="Set realistic memory limits and watch container_memory_working_set_bytes.",
+            confidence=90,
+            confidence_reason="Pod status or events report OOMKilled.",
         )
     if probes:
         item = probes[0]
@@ -87,10 +103,15 @@ def correlate_locally(investigation: dict) -> Diagnosis:
     if network:
         item = network[0]
         issue = item.get("issue") or "networking"
+        mismatch = issue == "selector_mismatch"
         return Diagnosis(
-            root_cause=f"Service {item.get('service')} has a {issue.replace('_', ' ')}.",
+            root_cause=(
+                "Service selector does not match pod labels."
+                if mismatch
+                else f"Service {item.get('service')} has a {issue.replace('_', ' ')}."
+            ),
             explanation="Service selectors do not match ready pod endpoints, so traffic cannot reach the workload.",
-            fix="Align Service selector labels with Pod labels, then confirm Endpoints have IPs.",
+            fix="Update the Service selector so it matches the Pod labels, then confirm Endpoints have IPs.",
             kubectl_command=(
                 f"kubectl -n {item.get('namespace') or 'default'} get svc {item.get('service')} -o yaml"
             ),
@@ -122,9 +143,9 @@ def correlate_locally(investigation: dict) -> Diagnosis:
             confidence_reason="Deployment replica counts show unavailability.",
         )
     return Diagnosis(
-        root_cause="No obvious Kubernetes failure was found in the collected evidence.",
+        root_cause=CLUSTER_HEALTHY_ROOT_CAUSE,
         explanation="Pods, deployments, probes, and services did not report a clear unhealthy signal.",
-        fix="If users still see errors, confirm the kubeconfig context and application-level metrics.",
+        fix="No Kubernetes change is required. If users still see errors, confirm the selected kubeconfig context.",
         kubectl_command="kubectl get pods -A && kubectl get events -A",
         prevention="Keep regular health checks and alerts on CrashLoopBackOff and FailedScheduling.",
         confidence=55,

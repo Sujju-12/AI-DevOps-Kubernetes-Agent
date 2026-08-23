@@ -65,3 +65,7 @@ Get keys from **Project Settings → API**. Never commit the service role key.
 Docker Compose forwards `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into the backend container.
 
 Prompt 04 dashboard details: [04-dashboard.md](04-dashboard.md).
+
+## Not InsForge
+
+This app uses **Supabase** for auth, history, and realtime. Ignore any leftover `.insforge` folder on disk; it is gitignored and is not part of the product.

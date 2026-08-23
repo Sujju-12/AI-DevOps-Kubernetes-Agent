@@ -36,6 +36,7 @@ export type InvestigationRow = {
   current_step: string | null;
   steps: { key: string; label: string; done: boolean }[];
   namespace: string | null;
+  cluster: string | null;
   root_cause: string | null;
   explanation: string | null;
   fix: string | null;

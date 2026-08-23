@@ -7,6 +7,7 @@ REASONS = {
     "Unhealthy",
     "Failed",
     "Killing",
+    "OOMKilled",
 }
 
 

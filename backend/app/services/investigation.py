@@ -1,7 +1,12 @@
 """Orchestrate kubectl evidence collection like a junior DevOps engineer."""
 
+from pathlib import Path
+
 from loguru import logger
 
+from app.core.config import get_settings
+from app.core.errors import friendly_kubectl_error
+from app.core.messages import KUBECONFIG_MISSING
 from app.kubernetes.deployments import inspect_deployments
 from app.kubernetes.events import analyze_events
 from app.kubernetes.executor import run_kubectl
@@ -41,6 +46,10 @@ def investigate(
 
 
 def collect_evidence(context: str | None = None, namespace: str | None = None, on_progress=None) -> dict:
+    kubeconfig = Path(get_settings().kubeconfig_path).expanduser()
+    if not kubeconfig.is_file():
+        raise ClusterUnreachableError(KUBECONFIG_MISSING)
+
     ns_args = ["-n", namespace] if namespace else ["-A"]
 
     if on_progress:
@@ -105,14 +114,4 @@ def _json(args: list[str], context: str | None) -> dict:
 
 
 def _friendly(stderr: str) -> str:
-    text = (stderr or "").strip()
-    if "kubectl is not installed" in text:
-        return "kubectl is not installed. Install kubectl and retry POST /investigate."
-    return (
-        "Unable to connect to Kubernetes cluster.\n\n"
-        "Please verify:\n"
-        "- kubeconfig path\n"
-        "- cluster access\n"
-        "- kubectl permissions\n"
-        f"\nDetails: {text or 'no output from kubectl'}"
-    )
+    return friendly_kubectl_error(stderr)
