@@ -27,6 +27,19 @@ This repo ships `.cursor/mcp.json`:
 
 In Cursor: **Settings → MCP**, confirm the `supabase` server is enabled, then complete the Supabase login if prompted. Features enabled: docs, account, database, debugging, development, functions, branching.
 
+## Agent skills
+
+Installed with:
+
+```bash
+npx skills add supabase/agent-skills
+```
+
+That writes `skills-lock.json` and copies skills into `.agents/skills/` (gitignored). Re-run the same command after clone. Skills:
+
+- `supabase` — Database, Auth, Edge Functions, Realtime, Storage, CLI/MCP, RLS
+- `supabase-postgres-best-practices` — schema, migrations, indexes, RLS, query design
+
 ## Environment variables
 
 Copy `backend/.env.example` and `frontend/.env.example`. Put secrets only in local `.env` files (gitignored).
