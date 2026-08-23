@@ -28,7 +28,8 @@ Success:
     "logs": {},
     "events": {},
     "deployments": {},
-    "network": {}
+    "network": {},
+    "probes": {}
   }
 }
 ```
@@ -48,6 +49,7 @@ Inspectors:
 | `events.py` | FailedScheduling, BackOff, FailedMount, FailedPull, ErrImagePull, Unhealthy |
 | `deployments.py` | Replica and condition health |
 | `network.py` | Services, selector vs pod labels, missing endpoints, DNS-related events |
+| `probes.py` | Readiness and liveness probe config plus Unhealthy probe-failed events |
 
 `backend/app/services/investigation.py` runs them in that order and returns one payload.
 

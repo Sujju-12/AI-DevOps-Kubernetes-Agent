@@ -3,6 +3,7 @@ from app.kubernetes.events import analyze_events
 from app.kubernetes.logs import summarize_logs
 from app.kubernetes.network import inspect_network
 from app.kubernetes.pods import inspect_pods
+from app.kubernetes.probes import inspect_probes
 
 
 def test_inspect_pods_crashloop() -> None:
@@ -80,6 +81,50 @@ def test_inspect_network_dns_events() -> None:
     )
     assert result["healthy"] is False
     assert result["dns_related"]
+
+
+def test_inspect_probes_readiness_and_liveness() -> None:
+    result = inspect_probes(
+        pods=[
+            {
+                "metadata": {"name": "payment-service", "namespace": "default"},
+                "spec": {
+                    "containers": [
+                        {
+                            "name": "app",
+                            "livenessProbe": {"httpGet": {"path": "/healthz", "port": 8080}},
+                            "readinessProbe": {"httpGet": {"path": "/ready", "port": 8080}},
+                        }
+                    ]
+                },
+                "status": {
+                    "phase": "Running",
+                    "conditions": [{"type": "Ready", "status": "False"}],
+                    "containerStatuses": [{"name": "app", "ready": False, "restartCount": 3}],
+                },
+            }
+        ],
+        events=[
+            {
+                "reason": "Unhealthy",
+                "message": "Liveness probe failed: HTTP probe failed with statuscode: 500",
+                "metadata": {"namespace": "default"},
+                "involvedObject": {"kind": "Pod", "name": "payment-service"},
+            },
+            {
+                "reason": "Unhealthy",
+                "message": "Readiness probe failed: Get http://10.0.0.8:8080/ready: connection refused",
+                "metadata": {"namespace": "default"},
+                "involvedObject": {"kind": "Pod", "name": "payment-service"},
+            },
+        ],
+    )
+    assert result["healthy"] is False
+    assert result["liveness_failures"] == 1
+    assert result["readiness_failures"] == 1
+    issue = result["failing_probes"][0]
+    assert issue["liveness_probe"]["type"] == "httpGet"
+    assert "/ready" in issue["readiness_probe"]["target"]
 
 
 def test_inspect_network_selector_mismatch() -> None:

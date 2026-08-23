@@ -17,14 +17,20 @@ def analyze_events(items: list[dict] | None = None) -> dict:
     for item in items:
         reason = item.get("reason") or ""
         event_type = item.get("type") or ""
-        if event_type != "Warning" and reason not in REASONS:
+        message = (item.get("message") or "")
+        is_probe = any(hint in message.lower() for hint in (
+            "liveness probe failed",
+            "readiness probe failed",
+            "startup probe failed",
+        ))
+        if event_type != "Warning" and reason not in REASONS and not is_probe:
             continue
         obj = item.get("involvedObject") or {}
         findings.append(
             {
                 "reason": reason or event_type,
                 "type": event_type,
-                "message": (item.get("message") or "")[:400],
+                "message": message[:400],
                 "namespace": (item.get("metadata") or {}).get("namespace") or obj.get("namespace"),
                 "object": f"{obj.get('kind', 'Object')}/{obj.get('name', 'unknown')}",
                 "count": item.get("count") or 1,

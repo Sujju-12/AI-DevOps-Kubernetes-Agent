@@ -10,5 +10,5 @@ def test_investigate_endpoint_returns_structured_body() -> None:
     body = response.json()
     assert body["status"] in {"success", "error"}
     assert "investigation" in body
-    for key in ("pods", "logs", "events", "deployments", "network"):
+    for key in ("pods", "logs", "events", "deployments", "network", "probes"):
         assert key in body["investigation"]
