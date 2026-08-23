@@ -11,6 +11,7 @@ class HealthResponse(BaseModel):
 class InvestigateRequest(BaseModel):
     context: str | None = None
     namespace: str | None = None
+    investigation_id: str | None = None
 
 
 class Diagnosis(BaseModel):

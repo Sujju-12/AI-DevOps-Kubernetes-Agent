@@ -16,9 +16,13 @@ class ClusterUnreachableError(RuntimeError):
     pass
 
 
-def investigate(context: str | None = None, namespace: str | None = None) -> InvestigateResponse:
+def investigate(
+    context: str | None = None,
+    namespace: str | None = None,
+    on_progress=None,
+) -> InvestigateResponse:
     try:
-        payload = collect_evidence(context=context, namespace=namespace)
+        payload = collect_evidence(context=context, namespace=namespace, on_progress=on_progress)
         return InvestigateResponse(status="success", investigation=payload)
     except ClusterUnreachableError as exc:
         logger.warning("Investigation could not reach the cluster: {}", exc)
@@ -36,9 +40,11 @@ def investigate(context: str | None = None, namespace: str | None = None) -> Inv
         )
 
 
-def collect_evidence(context: str | None = None, namespace: str | None = None) -> dict:
+def collect_evidence(context: str | None = None, namespace: str | None = None, on_progress=None) -> dict:
     ns_args = ["-n", namespace] if namespace else ["-A"]
 
+    if on_progress:
+        on_progress("pods")
     pods_raw = _json(["get", "pods", *ns_args, "-o", "json"], context)
     pods = inspect_pods(pods_raw.get("items") or [])
 
@@ -49,7 +55,11 @@ def collect_evidence(context: str | None = None, namespace: str | None = None) -
         )
         return result.stdout if result.success else result.stderr
 
+    if on_progress:
+        on_progress("logs")
     events_raw = _json(["get", "events", *ns_args, "-o", "json"], context)
+    if on_progress:
+        on_progress("events")
     events = analyze_events(events_raw.get("items") or [])
     probes = inspect_probes(pods_raw.get("items") or [], events_raw.get("items") or [])
 
@@ -63,9 +73,13 @@ def collect_evidence(context: str | None = None, namespace: str | None = None) -
         log_targets.append({"namespace": item.get("namespace"), "name": item.get("pod"), "status": "ProbeFailed"})
     logs = collect_logs_for_pods(fetch_logs, log_targets)
 
+    if on_progress:
+        on_progress("deployments")
     deployments = inspect_deployments(_json(["get", "deployments", *ns_args, "-o", "json"], context).get("items") or [])
     services = _json(["get", "svc", *ns_args, "-o", "json"], context)
     endpoints = _json(["get", "endpoints", *ns_args, "-o", "json"], context)
+    if on_progress:
+        on_progress("network")
     network = inspect_network(
         services.get("items") or [],
         endpoints.get("items") or [],
