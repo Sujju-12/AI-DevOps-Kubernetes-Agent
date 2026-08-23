@@ -1,9 +1,5 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
-**Local-only runtime:** this project does not use InsForge, OpenRouter, or other cloud providers. Auth and history live in SQLite. Reasoning uses a local SRE engine (optional Ollama). Clusters come from your machine kubeconfig.
-
-See [docs/local-setup.md](docs/local-setup.md) to run on localhost:3000 / localhost:8000.
-
 ## Goal
 
 Build an AI-powered Kubernetes troubleshooting platform that can:
