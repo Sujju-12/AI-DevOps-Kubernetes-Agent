@@ -34,11 +34,11 @@ Kubernetes Investigation Layer
 AI Kubernetes Agent
     ↓
 LLM Reasoning
-(OpenRouter via InsForge Key)
+(OpenRouter via environment key)
     ↓
 Root Cause + Suggested Fix
     ↓
-InsForge
+Supabase
 (Auth + History + Realtime)
     ↓
 Frontend Diagnosis
