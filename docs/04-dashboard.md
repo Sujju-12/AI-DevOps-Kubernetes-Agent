@@ -7,20 +7,18 @@ FastAPI still runs kubectl + AI. Supabase stores sessions, progress, and history
 ## What you need
 
 1. In [Auth settings](https://supabase.com/dashboard/project/tzdxvhbdpkqckkmecytz/auth/providers) enable Email login. For local demos, turn off **Confirm email**.
-2. Copy the anon key from **Project Settings → API** into:
+2. This repo already ships the **publishable anon key** for project `tzdxvhbdpkqckkmecytz` (in `frontend/.env.example`, Docker defaults, and `next.config.js`). For a local Next.js run:
 
-```env
-# backend/.env
-SUPABASE_URL=https://tzdxvhbdpkqckkmecytz.supabase.co
-SUPABASE_ANON_KEY=
-
-# frontend/.env.local
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_SUPABASE_URL=https://tzdxvhbdpkqckkmecytz.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```bash
+cp frontend/.env.example frontend/.env.local
+cd frontend && npm install && npm run dev
 ```
 
-3. `docker compose up --build` (pass the same `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY` so the frontend image can bake the public key).
+Or from the repo root: `docker compose up --build`.
+
+To use a different Supabase project, copy keys from **Project Settings → API** into `frontend/.env.local` and `backend/.env`. Never commit the service role key.
+
+3. `docker compose up --build` bakes the public anon key into the frontend image.
 
 ## Flow
 

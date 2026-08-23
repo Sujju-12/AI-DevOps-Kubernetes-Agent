@@ -34,7 +34,9 @@ export default function HomePage() {
       <main className="mx-auto max-w-md p-8">
         <h1 className="text-2xl font-semibold">AI Kubernetes Agent</h1>
         <p className="mt-4 text-slate-400">
-          Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then restart the frontend.
+          Supabase is not configured in this build. Copy <code>frontend/.env.example</code> to{" "}
+          <code>frontend/.env.local</code>, then restart with <code>npm run dev</code> or{" "}
+          <code>docker compose up --build</code>.
         </p>
       </main>
     );
