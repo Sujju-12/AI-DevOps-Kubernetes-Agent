@@ -1,0 +1,2 @@
+def investigate():
+    pass

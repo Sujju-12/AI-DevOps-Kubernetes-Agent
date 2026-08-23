@@ -1,5 +1,7 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
+**Prompt 01 foundation:** `docker compose up --build` then open http://localhost:3000 and http://localhost:8000/health. Details in [docs/01-project-setup.md](docs/01-project-setup.md).
+
 ## Goal
 
 Build an AI-powered Kubernetes troubleshooting platform that can:

@@ -156,3 +156,11 @@ vite.config.ts.timestamp-*
 .roo
 .trae
 .windsurf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+.pytest_cache/
