@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     openrouter_model: str = ""
     kubeconfig_path: str = str(Path.home() / ".kube" / "config")
+    kubectl_timeout_seconds: int = 30
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
 

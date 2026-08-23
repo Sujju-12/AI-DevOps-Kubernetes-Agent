@@ -9,8 +9,10 @@ services:
     environment:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
-      KUBECONFIG_PATH: ${KUBECONFIG_PATH:-/root/.kube/config}
+      KUBECONFIG_PATH: /kube/config
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - ${KUBECONFIG_HOST_DIR:-${HOME}/.kube}:/kube:ro
 
   frontend:
     build:
