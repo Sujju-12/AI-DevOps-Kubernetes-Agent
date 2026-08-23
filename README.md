@@ -1,5 +1,7 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
+See [docs/local-setup.md](docs/local-setup.md) to run the app built from `prompts/` (login `admin` / `admin`, http://localhost:3000).
+
 ## Goal
 
 Build an AI-powered Kubernetes troubleshooting platform that can:
