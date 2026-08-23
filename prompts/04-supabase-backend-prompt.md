@@ -28,7 +28,7 @@ Kubernetes Investigation Layer
 AI Kubernetes Agent
     ↓
 LLM Reasoning
-(OpenRouter via InsForge Key)
+(OpenRouter via environment key)
     ↓
 Root Cause + Suggested Fix
 ```
@@ -49,13 +49,15 @@ Receive diagnosis
 View investigation history
 ```
 
-Use InsForge for:
+Use **Supabase** for:
 
 ```text
 Authentication
 Investigation History
 Realtime Updates
 ```
+
+Cursor MCP config lives in `.cursor/mcp.json` (project `tzdxvhbdpkqckkmecytz`).
 
 ---
 
@@ -67,7 +69,7 @@ Implement:
 
 ```text
 Minimal Dashboard
-Authentication (InsForge)
+Authentication (Supabase)
 Realtime Investigation Progress
 Investigation History
 Frontend → Backend Integration
@@ -81,9 +83,9 @@ Do not overengineer.
 
 ## Requirements
 
-### 1. Authentication (InsForge)
+### 1. Authentication (Supabase)
 
-Add authentication using InsForge.
+Add authentication using Supabase Auth.
 
 Requirements:
 
@@ -143,7 +145,7 @@ Example:
 
 Progress should update while backend investigation runs.
 
-Use InsForge realtime capabilities.
+Use Supabase realtime.
 
 ---
 
@@ -186,7 +188,7 @@ No complex UI.
 
 ### 4. Investigation History
 
-Save investigations using InsForge.
+Save investigations using Supabase Postgres.
 
 Store:
 
@@ -309,7 +311,7 @@ DO NOT add charts.
 
 DO NOT add complex state management.
 
-Use InsForge only for:
+Use Supabase only for:
 
 ```text
 Authentication

@@ -28,7 +28,7 @@ Kubernetes Investigation Layer
 AI Kubernetes Agent
         ↓
 LLM Reasoning
-(OpenRouter via InsForge Key)
+(OpenRouter via environment key)
         ↓
 Root Cause Analysis
         ↓
@@ -51,7 +51,7 @@ It should:
 
 Important:
 
-Use **OpenRouter API Key provided via InsForge**.
+Use **OpenRouter API Key from the environment** (store secrets in `.env` or Supabase; never hardcode).
 
 Do not hardcode secrets.
 
@@ -125,7 +125,7 @@ OpenRouter
 Authentication:
 
 ```text
-OpenRouter API Key from InsForge
+OpenRouter API Key from environment / Supabase secrets
 ```
 
 Read from:

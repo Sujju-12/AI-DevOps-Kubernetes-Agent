@@ -1,4 +1,4 @@
-"""OpenRouter LLM client. The API key is read from env (set from InsForge, never hardcoded)."""
+"""OpenRouter LLM client. The API key is read from env (never hardcoded)."""
 
 import time
 
@@ -24,7 +24,7 @@ def complete(messages: list[dict]) -> str:
     api_key = (settings.openrouter_api_key or "").strip()
     if not api_key:
         raise LlmNotConfiguredError(
-            "OPENROUTER_API_KEY is not set. Store the key in InsForge and export it as an env var."
+            "OPENROUTER_API_KEY is not set. Export it from your environment (store secrets in Supabase or a local .env)."
         )
 
     model = (settings.openrouter_model or "").strip() or "openai/gpt-4o-mini"

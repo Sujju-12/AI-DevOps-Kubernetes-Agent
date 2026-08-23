@@ -1,6 +1,6 @@
 # AI Kubernetes Troubleshooting Agent - High Level Design (HLD)
 
-**Prompt 01–03:** `docker compose up --build` then `POST http://localhost:8000/investigate` (evidence + diagnosis). See [docs/01-project-setup.md](docs/01-project-setup.md), [docs/02-investigation.md](docs/02-investigation.md), and [docs/03-ai-reasoning.md](docs/03-ai-reasoning.md).
+**Prompt 01–03:** `docker compose up --build` then `POST http://localhost:8000/investigate` (evidence + diagnosis). Backend BaaS is **Supabase** (see [docs/04-supabase.md](docs/04-supabase.md) and `.cursor/mcp.json`). Also: [docs/01-project-setup.md](docs/01-project-setup.md), [docs/02-investigation.md](docs/02-investigation.md), [docs/03-ai-reasoning.md](docs/03-ai-reasoning.md).
 
 ## Goal
 
@@ -78,7 +78,7 @@ Build an AI-powered Kubernetes troubleshooting platform that can:
 │     - Convert investigation data into LLM prompt           │
 │                                                            │
 │  2. LLM Reasoning Layer                                    │
-│     - Uses OpenRouter API Key from InsForge                │
+│     - Uses OpenRouter API Key from environment             │
 │     - Supports models like:                                │
 │       - Claude                                              │
 │       - GPT                                                 │
@@ -99,7 +99,7 @@ Build an AI-powered Kubernetes troubleshooting platform that can:
                               │ Investigation Result
                               ▼
 ┌────────────────────────────────────────────────────────────┐
-│                    InsForge Backend                       │
+│                    Supabase Backend                       │
 │                                                            │
 │ Responsibility:                                            │
 │ - Authentication                                           │
@@ -161,7 +161,7 @@ Build an AI-powered Kubernetes troubleshooting platform that can:
                               │ Deploy Entire App
                               ▼
 ┌────────────────────────────────────────────────────────────┐
-│                     InsForge Deployment                   │
+│                     Supabase / app host                   │
 │                                                            │
 │ Responsibility:                                            │
 │ - Deploy frontend                                          │
@@ -188,7 +188,7 @@ Frontend sends API request
 FastAPI Backend
       (Orchestration Layer)
                 │
-                ├── Authenticate User (InsForge)
+                ├── Authenticate User (Supabase)
                 │
                 ▼
 Investigation Layer
@@ -204,7 +204,7 @@ AI Kubernetes Agent
                 │
                 ▼
 LLM Reasoning
-      (OpenRouter via InsForge Key)
+      (OpenRouter via env / Supabase secrets)
                 │
                 ▼
 Root Cause Analysis
@@ -213,10 +213,10 @@ Root Cause Analysis
 Suggested Fix Generated
                 │
                 ├── Save Investigation History
-                │        (InsForge)
+                │        (Supabase)
                 │
                 ├── Realtime Progress Updates
-                │        (InsForge)
+                │        (Supabase)
                 │
                 ▼
 Frontend Receives Result

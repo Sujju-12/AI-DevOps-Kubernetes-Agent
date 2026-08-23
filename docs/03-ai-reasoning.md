@@ -22,7 +22,7 @@
 
 If the cluster cannot be reached, `diagnosis` is omitted and `status` is `"error"` (same as Prompt 02).
 
-## OpenRouter key (InsForge)
+## OpenRouter key
 
 Do **not** hardcode secrets. The backend reads:
 
@@ -31,7 +31,7 @@ OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openai/gpt-4o-mini
 ```
 
-Store the key in InsForge and export it into the environment (Docker Compose already forwards `OPENROUTER_API_KEY` / `OPENROUTER_MODEL`).
+Store the key in a local `.env` or in Supabase project secrets, then export it. Docker Compose already forwards `OPENROUTER_API_KEY` / `OPENROUTER_MODEL`.
 
 If the key is missing or OpenRouter fails, the analyzer correlates the same evidence locally so the API still returns a diagnosis.
 

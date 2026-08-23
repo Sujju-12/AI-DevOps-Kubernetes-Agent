@@ -11,6 +11,10 @@ services:
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
       KUBECONFIG_PATH: /kube/config
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      SUPABASE_URL: ${SUPABASE_URL:-https://tzdxvhbdpkqckkmecytz.supabase.co}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_PROJECT_REF: tzdxvhbdpkqckkmecytz
     volumes:
       - ${KUBECONFIG_HOST_DIR:-${HOME}/.kube}:/kube:ro
 
@@ -21,5 +25,8 @@ services:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-https://tzdxvhbdpkqckkmecytz.supabase.co}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      NEXT_PUBLIC_SUPABASE_PROJECT_REF: tzdxvhbdpkqckkmecytz
     depends_on:
       - backend

@@ -1,22 +1,17 @@
 # AGENTS.md
 
-<!-- INSFORGE:START -->
-## InsForge backend
+## Supabase backend
 
-This project uses [InsForge](https://insforge.dev): an all-in-one, open-source Postgres-based backend (BaaS) that gives this app a database, authentication, file storage, edge functions, realtime, an AI model gateway, and payments through one platform.
+This project uses [Supabase](https://supabase.com) for authentication, Postgres, realtime, and investigation history (Prompt 04+). FastAPI remains the Kubernetes investigation orchestrator.
 
-- **Project:** **Kubernetes-ai-demo** (API base `https://ygpnw8xj.us-east.insforge.app`)
-- **Skills:** these InsForge skills are installed for supported coding agents. Reach for them before implementing any InsForge feature instead of guessing the API:
-  - `insforge`: app code with the `@insforge/sdk` client (database CRUD, auth, storage, edge functions, realtime, AI, email, and Stripe payments).
-  - `insforge-cli`: backend and infrastructure via the `insforge` CLI (projects, SQL, migrations, RLS policies, storage buckets, functions, secrets, payment setup, schedules, deploys).
-  - `insforge-debug`: diagnosing failures (SDK/HTTP errors, RLS denials, auth and OAuth issues) and running security or performance audits.
-  - `insforge-integrations`: wiring external auth providers (Clerk, Auth0, WorkOS, Better Auth, etc.) for JWT-based RLS, or the OKX x402 payment facilitator.
-  - `find-skills`: discovering additional skills on demand.
-- **Credentials:** app code reads keys from `.env.local`; the CLI reads `.insforge/project.json`. Never hardcode or commit keys.
+- **Project ref:** `tzdxvhbdpkqckkmecytz`
+- **API URL:** `https://tzdxvhbdpkqckkmecytz.supabase.co`
+- **MCP:** Cursor loads `.cursor/mcp.json` (hosted Supabase MCP with docs, account, database, debugging, development, functions, and branching).
+- **Credentials:** app code reads `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and optional `SUPABASE_SERVICE_ROLE_KEY` from env. Never hardcode or commit keys. The service role key is backend-only.
+
+When working on database, auth, RLS, or Edge Functions, use the **Supabase MCP** tools instead of guessing the API.
 
 Key patterns:
 
-- Database inserts take an array: `insert([{ ... }])`.
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
-- For storage uploads, persist both the returned `url` and `key`.
-<!-- INSFORGE:END -->
+- Prefer the anon key in the browser; use the service role only on the FastAPI server.

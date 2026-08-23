@@ -142,8 +142,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# InsForge & AI agent skills
+# Local leftover BaaS dirs (do not commit)
 .insforge
+
+# Local AI agent skill caches
 .agent
 .agents
 .augment

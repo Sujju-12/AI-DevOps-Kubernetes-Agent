@@ -15,7 +15,7 @@ Kubernetes Investigation Layer
     ↓
 AI Kubernetes Agent
     ↓
-LLM Reasoning (OpenRouter via InsForge)
+LLM Reasoning (OpenRouter via environment key)
     ↓
 Root Cause + Suggested Fix
     ↓
@@ -221,7 +221,7 @@ DO NOT implement:
 - kubectl logic
 - AI reasoning
 - OpenRouter
-- InsForge
+- Supabase (auth / history)
 - Authentication
 - Realtime updates
 

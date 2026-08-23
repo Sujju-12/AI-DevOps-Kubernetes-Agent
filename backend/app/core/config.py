@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     kubeconfig_path: str = str(Path.home() / ".kube" / "config")
     kubectl_timeout_seconds: int = 30
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    supabase_url: str = "https://tzdxvhbdpkqckkmecytz.supabase.co"
+    supabase_anon_key: str = ""
+    supabase_service_role_key: str = ""
+    supabase_project_ref: str = "tzdxvhbdpkqckkmecytz"
 
 
 @lru_cache

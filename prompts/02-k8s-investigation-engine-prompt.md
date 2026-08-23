@@ -280,7 +280,7 @@ DO NOT implement:
 - LLM reasoning
 - Root cause analysis
 - Fix recommendation
-- InsForge integration
+- Supabase integration
 - Authentication
 - Realtime updates
 
