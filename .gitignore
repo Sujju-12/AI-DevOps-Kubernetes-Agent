@@ -69,6 +69,8 @@ web_modules/
 .env
 .env.*
 !.env.example
+!frontend/.env.development
+!frontend/.env.production
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -142,7 +144,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Local leftover BaaS dirs (do not commit)
+# Local leftover BaaS dirs (not used; backend is Supabase)
 .insforge
 
 # Local AI agent skill caches

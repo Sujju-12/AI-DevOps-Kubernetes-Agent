@@ -12,6 +12,24 @@ class InvestigateRequest(BaseModel):
     context: str | None = None
     namespace: str | None = None
     investigation_id: str | None = None
+    cluster: str | None = None
+
+
+class ClusterContext(BaseModel):
+    name: str
+    cluster: str | None = None
+    user: str | None = None
+    namespace: str | None = None
+    server: str | None = None
+    is_current: bool = False
+
+
+class ClusterListResponse(BaseModel):
+    status: str
+    current_context: str | None = None
+    kubeconfig_path: str
+    clusters: list[ClusterContext] = Field(default_factory=list)
+    message: str | None = None
 
 
 class Diagnosis(BaseModel):

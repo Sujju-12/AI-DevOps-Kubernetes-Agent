@@ -46,22 +46,26 @@ Copy `backend/.env.example` and `frontend/.env.example`. Put secrets only in loc
 
 ```env
 SUPABASE_URL=https://tzdxvhbdpkqckkmecytz.supabase.co
-SUPABASE_ANON_KEY=
+SUPABASE_ANON_KEY=<publishable anon key from frontend/.env.example>
 SUPABASE_SERVICE_ROLE_KEY=
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openai/gpt-4o-mini
 ```
 
-Frontend (public anon key only):
+Frontend (public anon key only — already filled in `frontend/.env.example`):
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://tzdxvhbdpkqckkmecytz.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<same publishable anon key>
 NEXT_PUBLIC_SUPABASE_PROJECT_REF=tzdxvhbdpkqckkmecytz
 ```
 
-Get keys from **Project Settings → API**. Never commit the service role key.
+Get keys from **Project Settings → API**. Never commit the service role key. The anon key is publishable and is included so `npm run dev` / Docker work without extra setup.
 
 Docker Compose forwards `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into the backend container.
 
 Prompt 04 dashboard details: [04-dashboard.md](04-dashboard.md).
+
+## Not InsForge
+
+This app uses **Supabase** for auth, history, and realtime. Ignore any leftover `.insforge` folder on disk; it is gitignored and is not part of the product.

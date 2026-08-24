@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { friendlyAuthError } from "@/lib/errors";
 import { getSupabase } from "@/lib/supabase";
 
 export function LoginForm() {
@@ -22,7 +23,7 @@ export function LoginForm() {
     const { error: authError } = await action;
     setBusy(false);
     if (authError) {
-      setError(authError.message);
+      setError(friendlyAuthError(authError.message));
     }
   }
 

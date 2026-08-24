@@ -21,7 +21,9 @@ Return ONLY valid JSON with these keys:
   "confidence_reason": "why the score is high or low, citing evidence"
 }
 
-If the cluster looks healthy, say so in root_cause and keep confidence moderate.
+If the cluster looks healthy, set root_cause to exactly:
+"No critical Kubernetes issues detected. Cluster appears healthy."
+Keep confidence moderate.
 """
 
 

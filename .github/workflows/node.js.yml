@@ -1,15 +1,8 @@
-<<<<<<< HEAD
 # Frontend + backend CI. The app lives under frontend/, not the repo root.
-=======
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
->>>>>>> origin/main
 name: Node.js CI
 
 on:
   push:
-<<<<<<< HEAD
     branches: ["main"]
   pull_request:
     branches: ["main"]
@@ -48,29 +41,3 @@ jobs:
           python-version: "3.12"
       - run: pip install -r backend/requirements.txt
       - run: python -m pytest backend/tests -q
-=======
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
->>>>>>> origin/main
