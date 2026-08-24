@@ -127,6 +127,35 @@ def test_inspect_probes_readiness_and_liveness() -> None:
     assert "/ready" in issue["readiness_probe"]["target"]
 
 
+def test_collect_evidence_marks_logs_after_log_collection(monkeypatch) -> None:
+    from pathlib import Path
+
+    from app.services import investigation as module
+
+    order: list[str] = []
+
+    monkeypatch.setattr(Path, "is_file", lambda self: True)
+
+    def fake_json(args, context=None):
+        resource = args[1]
+        order.append(f"fetch:{resource}")
+        return {"items": []}
+
+    def fake_logs(fetch_logs, pods):
+        order.append("collect_logs")
+        return {"pod_logs": [], "pods_checked": 0}
+
+    monkeypatch.setattr(module, "_json", fake_json)
+    monkeypatch.setattr(module, "collect_logs_for_pods", fake_logs)
+
+    module.collect_evidence(on_progress=lambda key: order.append(f"step:{key}"))
+    logs_step = order.index("step:logs")
+    logs_collect = order.index("collect_logs")
+    events_step = order.index("step:events")
+    assert logs_collect > logs_step
+    assert events_step > logs_collect
+
+
 def test_inspect_network_selector_mismatch() -> None:
     result = inspect_network(
         services=[{"metadata": {"name": "web", "namespace": "demo"}, "spec": {"selector": {"app": "frontend"}}}],

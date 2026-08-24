@@ -31,5 +31,8 @@ export async function runInvestigation(
     },
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
+  if (data?.status === "error") {
+    throw new Error(data.message || "Investigation failed.");
+  }
   return data;
 }
