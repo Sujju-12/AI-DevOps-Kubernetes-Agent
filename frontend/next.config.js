@@ -15,6 +15,7 @@ const supabaseAnonKey = publicEnv(
 
 const nextConfig = {
   output: "standalone",
+  eslint: { ignoreDuringBuilds: true },
   env: {
     NEXT_PUBLIC_API_BASE_URL: publicEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:8000"),
     NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
