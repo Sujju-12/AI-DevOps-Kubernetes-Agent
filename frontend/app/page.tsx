@@ -23,7 +23,12 @@ export default function HomePage() {
   }, []);
 
   if (!ready) {
-    return <main className="p-8 text-slate-400">Loading...</main>;
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6">
+        <div className="status-dot bg-cyan-400 pulse-soft" />
+        <p className="text-sm font-medium tracking-wide text-slate-400">Loading...</p>
+      </main>
+    );
   }
   if (!session) {
     return <LoginForm />;

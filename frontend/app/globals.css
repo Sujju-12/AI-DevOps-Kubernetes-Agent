@@ -2,6 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+  --bg-0: #070b14;
+  --bg-1: #0c1220;
+  --line: rgba(148, 163, 184, 0.14);
+  --accent: #22d3ee;
+  --accent-2: #818cf8;
+}
+
+html,
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--bg-0);
+  background-image:
+    radial-gradient(1200px 600px at 12% -10%, rgba(34, 211, 238, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 110% 8%, rgba(129, 140, 248, 0.16), transparent 50%),
+    radial-gradient(700px 400px at 50% 120%, rgba(16, 185, 129, 0.08), transparent 45%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1));
+  color: #e2e8f0;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #f8fafc;
+}
+
+input,
+button,
+textarea {
+  font: inherit;
+}
+
+.k8s-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.glass-panel {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(8, 13, 24, 0.9));
+  border: 1px solid var(--line);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.4),
+    0 18px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.cluster-card {
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.95), rgba(8, 13, 24, 0.92));
+  border: 1px solid var(--line);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.cluster-card:hover:not(:disabled) {
+  border-color: rgba(34, 211, 238, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(34, 211, 238, 0.08);
+}
+
+.cluster-card:disabled {
+  opacity: 0.55;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
 }
