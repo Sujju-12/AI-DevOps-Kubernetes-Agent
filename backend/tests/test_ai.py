@@ -1,4 +1,3 @@
-from app.ai.llm import LlmNotConfiguredError, complete
 from app.ai.analyzer import correlate_locally, diagnose
 from app.ai.llm import LlmNotConfiguredError, complete
 from app.ai.prompt import SYSTEM_PROMPT, build_prompt

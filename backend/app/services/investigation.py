@@ -64,11 +64,7 @@ def collect_evidence(context: str | None = None, namespace: str | None = None, o
         )
         return result.stdout if result.success else result.stderr
 
-    if on_progress:
-        on_progress("logs")
     events_raw = _json(["get", "events", *ns_args, "-o", "json"], context)
-    if on_progress:
-        on_progress("events")
     events = analyze_events(events_raw.get("items") or [])
     probes = inspect_probes(pods_raw.get("items") or [], events_raw.get("items") or [])
 
@@ -80,7 +76,12 @@ def collect_evidence(context: str | None = None, namespace: str | None = None, o
             continue
         seen.add(key)
         log_targets.append({"namespace": item.get("namespace"), "name": item.get("pod"), "status": "ProbeFailed"})
+
+    if on_progress:
+        on_progress("logs")
     logs = collect_logs_for_pods(fetch_logs, log_targets)
+    if on_progress:
+        on_progress("events")
 
     if on_progress:
         on_progress("deployments")
