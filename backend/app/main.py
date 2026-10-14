@@ -7,12 +7,14 @@ from app.api.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.messages import UNEXPECTED
+from app.core.telemetry import configure_telemetry
 
 
 def create_app() -> FastAPI:
     configure_logging()
     settings = get_settings()
     app = FastAPI(title="AI Kubernetes Agent", version="0.1.0")
+    configure_telemetry(app)
     origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
     app.add_middleware(
         CORSMiddleware,
