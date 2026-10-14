@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Header
+from opentelemetry import trace
 
 from app.ai.analyzer import diagnose
 from app.core.config import get_settings
@@ -13,6 +14,7 @@ from app.services.history import PROGRESS_STEPS, mark_step, patch_investigation
 from app.services.investigation import investigate
 
 router = APIRouter()
+tracer = trace.get_tracer("ai-kubernetes-agent")
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -52,11 +54,15 @@ def run_investigation(
         nonlocal steps
         steps = mark_step(token, payload.investigation_id, steps, key)
 
-    result = investigate(
-        context=payload.context,
-        namespace=payload.namespace,
-        on_progress=on_progress,
-    )
+    with tracer.start_as_current_span("kubernetes.evidence_collection") as span:
+        span.set_attribute("k8s.namespace", payload.namespace or "all")
+        result = investigate(
+            context=payload.context,
+            namespace=payload.namespace,
+            on_progress=on_progress,
+        )
+        span.set_attribute("investigation.status", result.status)
+
     if result.status != "success":
         patch_investigation(
             token,
@@ -66,7 +72,9 @@ def run_investigation(
         return result
 
     on_progress("ai")
-    result.diagnosis = diagnose(result.investigation)
+    with tracer.start_as_current_span("agent.diagnosis") as span:
+        result.diagnosis = diagnose(result.investigation)
+        span.set_attribute("agent.diagnosis.available", result.diagnosis is not None)
     on_progress("done")
     diagnosis = result.diagnosis
     patch_investigation(
