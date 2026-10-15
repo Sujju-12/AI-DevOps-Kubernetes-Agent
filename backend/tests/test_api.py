@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models.schemas import Diagnosis
+from app.models.schemas import Diagnosis, InvestigateResponse
 
 
 def test_investigate_endpoint_returns_structured_body(monkeypatch) -> None:
@@ -12,18 +12,36 @@ def test_investigate_endpoint_returns_structured_body(monkeypatch) -> None:
         kubectl_command="kubectl edit deployment payment-service",
         confidence=92,
     )
-    monkeypatch.setattr("app.api.routes.diagnose", lambda _investigation: fake)
+    monkeypatch.setattr("app.api.routes.investigate", lambda **_kwargs: _success_result())
+    monkeypatch.setattr("app.api.routes.diagnose_with_metadata", lambda _investigation: (fake, "local_fallback"))
+    monkeypatch.setattr("app.api.routes.patch_investigation", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("app.api.routes.mark_step", lambda _token, _id, steps, _key: steps)
+    monkeypatch.setattr("app.api.routes.record_investigation", lambda **_kwargs: None)
     client = TestClient(app)
     response = client.post("/investigate", json={})
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] in {"success", "error"}
+    assert body["status"] == "success"
     assert "investigation" in body
     for key in ("pods", "logs", "events", "deployments", "network", "probes"):
         assert key in body["investigation"]
-    if body["status"] == "success":
-        assert body["diagnosis"]["root_cause"] == "DATABASE_URL missing"
-        assert body["diagnosis"]["confidence"] == 92
+    assert body["diagnosis"]["root_cause"] == "DATABASE_URL missing"
+    assert body["diagnosis"]["confidence"] == 92
+
+
+def _success_result():
+    return InvestigateResponse(
+        status="success",
+        investigation={
+            "pods": {"problematic_pods": [{"name": "api", "status": "CrashLoopBackOff"}]},
+            "logs": {"pod_logs": []},
+            "events": {"detected": []},
+            "deployments": {"unhealthy_deployments": []},
+            "network": {"issues": []},
+            "probes": {"failing_probes": []},
+        },
+        message="Investigation completed",
+    )
 
 
 def test_clusters_endpoint_returns_list(monkeypatch) -> None:

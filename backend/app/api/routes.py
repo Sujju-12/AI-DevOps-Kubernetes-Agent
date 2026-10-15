@@ -1,7 +1,10 @@
+from time import perf_counter
+
 from fastapi import APIRouter, Header
 from opentelemetry import trace
 
-from app.ai.analyzer import diagnose
+from app.ai.agentops import diagnose_with_metadata
+from app.core.agentops_metrics import evidence_counts, record_investigation
 from app.core.config import get_settings
 from app.kubernetes.clusters import list_kube_contexts
 from app.models.schemas import (
@@ -34,6 +37,7 @@ def run_investigation(
     body: InvestigateRequest | None = None,
     authorization: str | None = Header(default=None),
 ) -> InvestigateResponse:
+    started_at = perf_counter()
     payload = body or InvestigateRequest()
     token = _bearer(authorization)
     steps = [dict(item) for item in PROGRESS_STEPS]
@@ -64,6 +68,11 @@ def run_investigation(
         span.set_attribute("investigation.status", result.status)
 
     if result.status != "success":
+        record_investigation(
+            outcome="error",
+            diagnosis_source="not_run",
+            duration_seconds=perf_counter() - started_at,
+        )
         patch_investigation(
             token,
             payload.investigation_id,
@@ -73,10 +82,20 @@ def run_investigation(
 
     on_progress("ai")
     with tracer.start_as_current_span("agent.diagnosis") as span:
-        result.diagnosis = diagnose(result.investigation)
-        span.set_attribute("agent.diagnosis.available", result.diagnosis is not None)
+        diagnosis, diagnosis_source = diagnose_with_metadata(result.investigation)
+        result.diagnosis = diagnosis
+        span.set_attribute("agent.diagnosis.available", diagnosis is not None)
+        span.set_attribute("agent.diagnosis.source", diagnosis_source)
+        counts = evidence_counts(result.investigation)
+        span.set_attribute("agent.evidence.count", sum(counts.values()))
+
+    record_investigation(
+        outcome="success",
+        diagnosis_source=diagnosis_source,
+        duration_seconds=perf_counter() - started_at,
+        counts=counts,
+    )
     on_progress("done")
-    diagnosis = result.diagnosis
     patch_investigation(
         token,
         payload.investigation_id,
